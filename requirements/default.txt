@@ -1,2 +1,2 @@
-boto
+boto>=2.34.0
 hg+https://code.google.com/p/python-progressbar/@235f632a9c86#egg=progressbar
