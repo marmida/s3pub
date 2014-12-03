@@ -193,13 +193,22 @@ def test_get_index_doc():
     }
     assert_equals(upload._get_index_doc(mock_bucket), 'index.html')
 
+def _start_progressbar(bucket, local_path, remote_path, md5, pbar):
+    '''
+    Ensure we call the ProgressBar's "change_file".
+
+    Meant to be used as a side_effect to a mock s3pub.upload._upload.
+    '''
+    pbar.change_file(local_path)
+
 def test_do_upload_no_website():
     '''
     do_upload: returns only modified keys when there is no website.
     '''
     with mock.patch('s3pub.upload._todos') as mock_todos, \
             mock.patch('boto.connect_s3') as mock_connect, \
-            mock.patch('s3pub.upload._upload'), \
+            mock.patch(
+                's3pub.upload._upload', side_effect=_start_progressbar), \
             mock.patch('s3pub.upload._get_index_doc'):
         mock_todos.return_value = (
             {
@@ -228,7 +237,8 @@ def test_do_upload_with_website():
     '''
     with mock.patch('s3pub.upload._todos') as mock_todos, \
             mock.patch('boto.connect_s3'), \
-            mock.patch('s3pub.upload._upload'), \
+            mock.patch(
+                's3pub.upload._upload', side_effect=_start_progressbar), \
             mock.patch('s3pub.upload._get_index_doc') as mock_get_index_doc:
         mock_get_index_doc.return_value = 'index.html'
         mock_todos.return_value = (
