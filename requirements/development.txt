@@ -1,2 +1,6 @@
+behave>=1.2.4
 mock>=1.0.1
 nose>=1.3.4
+PyYAML>=3.11
+requests>=2.5.0
+yurl>=0.13
