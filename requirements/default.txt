@@ -1,2 +1,3 @@
 boto>=2.34.0
-hg+https://code.google.com/p/python-progressbar/@235f632a9c86#egg=progressbar
+git+https://github.com/WoLpH/python-progressbar.git#egg=progressbar
+six>=1.8.0

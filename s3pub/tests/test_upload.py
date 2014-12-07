@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import boto.exception
 import mock
 from nose.tools import assert_equals, raises
+from six import iteritems
 
 from s3pub import upload
 
@@ -147,7 +148,7 @@ def _test_todos(local, remote, expected):
     mock_open = mock.MagicMock(side_effect=_mock_open)
 
     def _list(_):
-        for rpath, retag in remote.iteritems():
+        for rpath, retag in iteritems(remote):
             m = mock.MagicMock(etag='"' + retag + '"')
             # 'name' is a special kwarg for mocks; must use assignment
             m.name = rpath
@@ -219,15 +220,15 @@ def test_do_upload_no_website():
             ['/path2'],
         )
         assert_equals(
-            upload.do_upload('bogus', 'bogus', False),
-            ['/path1', '/hello/index.html'],
+            set(upload.do_upload('bogus', 'bogus', False)),
+            {'/path1', '/hello/index.html'},
         )
 
         mock_bucket = mock_connect.return_value.get_bucket.return_value
         mock_bucket.delete_keys.return_value.errors = []
         assert_equals(
-            upload.do_upload('bogus', 'bogus', True),
-            ['/path1', '/hello/index.html', '/path2'],
+            set(upload.do_upload('bogus', 'bogus', True)),
+            {'/path1', '/hello/index.html', '/path2'},
         )
         mock_bucket.delete_keys.assert_called_once_with(['/path2'])
 

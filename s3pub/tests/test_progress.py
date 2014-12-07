@@ -10,11 +10,12 @@ You will probably need to explicitly set PYTHONPATH to run this script.
 
 import mock
 import time
+from six import print_
 
 import s3pub.progress
 
 def main():
-    print 'Starting UploadProgressBar test'
+    print_('Starting UploadProgressBar test')
 
     files = {
         'something/else/blah/a.foo': 5000,
@@ -32,7 +33,7 @@ def main():
         time.sleep(0.5)
     pbar1.finish()
 
-    print 'Done'
+    print_('Done')
 
 if __name__ == '__main__':
     main()
