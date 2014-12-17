@@ -37,7 +37,10 @@ class TempFileManager(object):
     '''
     Create temporary files and directories with random names and content.
 
-    Remove them all on exit.
+    Remove everything when 'cleanup' is called.
+
+    It'd be nice to present this as a context manager, but that doesn't jive with
+    behave's "before/after" callback system.
     '''
     def __init__(self):
         self.registry = {}
@@ -88,7 +91,17 @@ def before_all(context):
     context.bucket = context.connection.get_bucket(context.config['bucket'])
     
 def before_scenario(context, _):
+    '''
+    Initialize temporary file registries.
+    '''
+    # tempfiles: used by scenario for files uploaded by the user.
     context.tempfiles = TempFileManager()
+    # prior_files: used by scenario for stuff existing before user runs upload
+    context.prior_files = TempFileManager()
 
 def after_scenario(context, _):
+    '''
+    Cleanup tempfiles.
+    '''
     context.tempfiles.cleanup()
+    context.prior_files.cleanup()

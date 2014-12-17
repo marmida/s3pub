@@ -5,6 +5,7 @@ Step implementations.
 from __future__ import absolute_import
 
 from behave import given, when, then
+from boto.s3.key import Key
 from nose.tools import assert_equal
 
 import s3pub.upload
@@ -34,14 +35,15 @@ def assert_s3_web(context):
 
 @given('that previous test content exists in the bucket')
 def init_non_empty_bucket(context):
-    assert False
+    init_empty_bucket(context)
+    context.prior_files.create()
+    context.prior_files.create(subdirs=1)
+    context.prior_files.create(subdirs=2)
+    for path, content in context.prior_files:
+        Key(context.bucket, path).set_contents_from_string(content)
 
 @then('the previous test content should not be available from the bucket\'s S3 URL')
 def assert_old_s3_web(context):
-    to_assert = [
-        path for path in context.old_content
-            if not path.endswith('index.html')]
-    assert to_assert
-    for path in to_assert:
-        assert_equal(404, context.request(path))
-            
+    for path, content in context.prior_files:
+        resp = context.request(path)
+        assert not resp.ok

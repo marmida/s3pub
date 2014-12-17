@@ -1,6 +1,5 @@
 Feature: Publishing to S3
 
-@wip
 Scenario: Publishing to an empty bucket
 Given that no files exist in the bucket
 When I publish new test content to the bucket
