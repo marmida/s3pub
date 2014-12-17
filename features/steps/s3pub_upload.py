@@ -19,7 +19,11 @@ def init_content_and_publish(context):
     context.tempfiles.create(subdirs=1)
     context.tempfiles.create(subdirs=2)
     s3pub.upload.do_upload(
-        context.tempfiles.root, context.config['bucket'], True)
+        context.tempfiles.root,
+        context.config['bucket'],
+        True,
+        (context.config['access-key'], context.config['secret-access-key']),
+    )
 
 @then('the test content should be available from the bucket\'s S3 URL')
 def assert_s3_web(context):
