@@ -1,0 +1,4 @@
+bucket: bucket-name
+access-key: xxxx
+secret-access-key: yyyy
+s3-url: http://url-to-bucket-webserver.amazonaws.com

@@ -52,3 +52,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# s3pub-specific
+features/test_config.yaml
