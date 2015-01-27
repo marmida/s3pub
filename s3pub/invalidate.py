@@ -1,6 +1,10 @@
+'''
+CloudFront invalidation routines.
+'''
+
 from __future__ import absolute_import
 
-import boto.cloudfront
+from boto.cloudfront import CloudFrontConnection
 import time
 
 import s3pub.progress
@@ -15,19 +19,18 @@ def get_distribution(connection, distrib_id):
         return dists[0]
     raise ValueError('invalid distribution id: {}'.format(distrib_id))
 
-def do_invalidate(distrib_id, inval_keys, progress=True):
+def do_invalidate(distrib_id, inval_keys, creds):
     '''
     Send a CloudFront invalidation request for the given objects.
-
-    If progress is True, block until the request completes.
     '''
-    # TODO: alternate connection methods
-    cf = boto.cloudfront.CloudFrontConnection()
+    cf = CloudFrontConnection(**creds.as_dict())
     distrib = get_distribution(cf, distrib_id)
     req = cf.create_invalidation_request(distrib.id, inval_keys)
 
-    if progress:
-        _monitor_invalidation(cf, distrib_id, req)
+    pbar = s3pub.progress.InvalidationProgressBar(req.id)
+    for _ in pbar(Monitor(cf, distrib_id, req.id)):
+        pass
+    print 'Done.'
 
 class Monitor(object):
     '''
@@ -59,8 +62,3 @@ class Monitor(object):
         # iterate indefinitely
         return True
 
-def _monitor_invalidation(connection, distrib_id, req):
-    pbar = s3pub.progress.InvalidationProgressBar(req.id)
-    for _ in pbar(Monitor(connection, distrib_id, req.id)):
-        pass
-    print 'Done.'

@@ -119,23 +119,16 @@ def _get_index_doc(bucket):
 
     return conf['WebsiteConfiguration']['IndexDocument']['Suffix']
 
-def do_upload(src, dst, delete, api_keys=None):
+def do_upload(src, dst, delete, creds):
     '''
     Upload and delete files as necessary to synchronize S3.
 
     Return a list of remote keys modified.
-
-    If provided, api_keys should be a pair (access_key, secret_key) of AWS API
-    keys. Otherwise, Boto will do its search for credentials on disk.
     '''
+    conn = S3Connection(**creds.as_dict())
     # split bucket name from key prefix
     bucket_name, prefix = _split_dest(dst)
-
-    if api_keys:
-        s3 = S3Connection(*api_keys)
-    else:
-        s3 = boto.connect_s3()
-    bucket = s3.get_bucket(bucket_name)
+    bucket = conn.get_bucket(bucket_name)
 
     # paths is a list of tuples: (local, remote)
     paths = []

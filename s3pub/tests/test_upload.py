@@ -168,7 +168,8 @@ def test_do_upload_nochanges():
     '''
     with mock.patch('s3pub.upload._todos', return_value=([], [])), \
             mock.patch('boto.connect_s3'):
-        assert_equals(upload.do_upload('bogus', 'bogus', False), [])
+        assert_equals(
+            upload.do_upload('bogus', 'bogus', False, None, None), [])
 
 def test_get_index_doc():
     '''
@@ -220,14 +221,14 @@ def test_do_upload_no_website():
             ['/path2'],
         )
         assert_equals(
-            set(upload.do_upload('bogus', 'bogus', False)),
+            set(upload.do_upload('bogus', 'bogus', False, None, None)),
             {'/path1', '/hello/index.html'},
         )
 
         mock_bucket = mock_connect.return_value.get_bucket.return_value
         mock_bucket.delete_keys.return_value.errors = []
         assert_equals(
-            set(upload.do_upload('bogus', 'bogus', True)),
+            set(upload.do_upload('bogus', 'bogus', True, None, None)),
             {'/path1', '/hello/index.html', '/path2'},
         )
         mock_bucket.delete_keys.assert_called_once_with(['/path2'])
@@ -250,6 +251,6 @@ def test_do_upload_with_website():
             ['/path2'],
         )
         assert_equals(
-            upload.do_upload('bogus', 'bogus', False),
+            upload.do_upload('bogus', 'bogus', False, None, None),
             ['/hello/index.html', '/hello/'],
         )
