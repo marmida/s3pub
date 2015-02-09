@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import boto
-from boto.s3.connection import S3Connection
+import boto.s3.connection
 import boto.s3.key
 import boto.s3.bucket
 import functools
@@ -125,7 +125,7 @@ def do_upload(src, dst, delete, creds):
 
     Return a list of remote keys modified.
     '''
-    conn = S3Connection(**creds.as_dict())
+    conn = boto.s3.connection.S3Connection(**creds.as_dict())
     # split bucket name from key prefix
     bucket_name, prefix = _split_dest(dst)
     bucket = conn.get_bucket(bucket_name)
