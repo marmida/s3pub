@@ -179,7 +179,7 @@ def test_do_upload_nochanges():
             [],
         )
 
-        assert mock_connection().get_bucket.assert_called_with('bogus-bucket')
+        mock_connection().get_bucket.assert_called_with('bogus-bucket')
 
 def test_get_index_doc():
     '''
