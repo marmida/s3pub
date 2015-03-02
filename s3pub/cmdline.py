@@ -94,7 +94,7 @@ def parse_args():
             config = yaml.load(config_fp)
     except IOError:
         # file doesn't exist, just assume creds come from args
-        creds = (args['aws-access-key'], args['aws-secret-key'])
+        creds = (args.aws_access_key, args.aws_secret_key)
     except YAMLError:
         parser.error(
             'Configuration file is improperly formatted: {}'.format(
