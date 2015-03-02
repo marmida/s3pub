@@ -245,9 +245,6 @@ def setup_do_upload(indexname):
 def test_do_upload_no_website(mock_todos, mock_connection, mock_creds):
     '''
     do_upload: returns only modified keys when there is no index document.
-
-    TODO: review the handling of index documents; I don't think these tests
-    distinguish between configuration cases.
     '''
     assert_equals(
         set(upload.do_upload('bogus', 'bogus', False, mock_creds)),
@@ -266,14 +263,16 @@ def test_do_upload_no_website(mock_todos, mock_connection, mock_creds):
     mock_bucket.delete_keys.assert_called_once_with(['/path2'])
 
 @setup_do_upload('index.html')
-@nottest
-def test_do_upload_with_website(
-        mock_todos, mock_connection, mock_creds):
+def test_do_upload_with_website(mock_todos, mock_connection, mock_creds):
     '''
     do_upload: adds directory paths when index documents are invalidated.
-    '''    
+
+    According to this post:
+    http://paulstamatiou.com/hosting-on-amazon-s3-with-cloudfront/
+
+    We should invalidate directory paths with and without the trailing slash.
+    '''
     assert_equals(
-        upload.do_upload('bogus', 'bogus', False, mock_creds),
-        ['/hello/index.html', '/hello/'],
-        # TODO: should this include '/hello', '/hello/', or both?
+        set(upload.do_upload('bogus', 'bogus', False, mock_creds)),
+        {'/hello/index.html', '/hello/', '/hello', '/path1'},
     )

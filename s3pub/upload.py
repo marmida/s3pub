@@ -5,6 +5,7 @@ import boto.s3.connection
 import boto.s3.key
 import boto.s3.bucket
 import functools
+import itertools
 import os.path
 import posixpath
 from six import iteritems, itervalues
@@ -143,7 +144,7 @@ def do_upload(src, dst, delete, creds):
         return []
     
     inval_paths = []
-    if to_upload:
+    if to_upload: 
         # do upload
         pbar = s3pub.progress.UploadProgressBar(
             {lpath : info[2] for lpath, (info, _) in iteritems(to_upload)})
@@ -154,8 +155,14 @@ def do_upload(src, dst, delete, creds):
 
     indexname = _get_index_doc(bucket)
     if indexname:
-        inval_paths.extend(os.path.dirname(rpath) + '/' for _, rpath in 
-            itervalues(to_upload) if os.path.basename(rpath) == indexname)
+        inval_paths.extend(
+            itertools.chain.from_iterable(
+                # add index paths with and without trailing slash
+                [os.path.dirname(rpath), os.path.dirname(rpath) + '/'] for 
+                    _, rpath in itervalues(to_upload)
+                    if os.path.basename(rpath) == indexname
+            )
+        )
 
     if delete and to_delete:
         # do deletion
