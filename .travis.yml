@@ -2,6 +2,7 @@ language: python
 python:
   - "3.4"
   - "3.3"
+  - "3.2"
   - "2.7"
   - "2.6"
 install:
@@ -9,7 +10,8 @@ install:
   - pip install -r requirements/development.txt
 script:
   - nosetests
-  - behave
+  # behave doesn't work on Python 2.6
+  - if [[ $TRAVIS_PYTHON_VERSION != '2.6' ]]; then behave; fi
 env:
   global:
     - S3BUCKET=s3pub-test
