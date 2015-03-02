@@ -91,6 +91,8 @@ def get_config():
     keymap = {
         'S3ACCESSKEY': 'access-key',
         'S3SECRET': 'secret-access-key',
+        'S3BUCKET': 'bucket',
+        'S3URL': 's3-url',
     }
     for envname, confname in six.iteritems(keymap):
         if envname in os.environ:

@@ -10,3 +10,7 @@ install:
 script:
   - nosetests
   - behave
+env:
+  global:
+    - S3BUCKET=s3pub-test
+    - S3URL=http://s3pub-test.s3-website-us-west-2.amazonaws.com/
