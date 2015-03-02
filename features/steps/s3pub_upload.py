@@ -8,6 +8,7 @@ from behave import given, when, then
 from boto.s3.key import Key
 from nose.tools import assert_equal
 
+from s3pub.cmdline import Credentials
 import s3pub.upload
 
 @given('that no files exist in the bucket')
@@ -23,7 +24,8 @@ def init_content_and_publish(context):
         context.tempfiles.root,
         context.config['bucket'],
         True,
-        (context.config['access-key'], context.config['secret-access-key']),
+        Credentials(
+            context.config['access-key'], context.config['secret-access-key']),
     )
 
 @then('the test content should be available from the bucket\'s S3 URL')
