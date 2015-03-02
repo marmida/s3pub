@@ -13,7 +13,8 @@ import s3pub.upload
 
 @given('that no files exist in the bucket')
 def init_empty_bucket(context):
-    context.bucket.delete_keys([key.name for key in context.bucket.list()])
+    context.bucket.delete_keys(
+        [key.name for key in context.bucket.list(context.prefix)])
 
 @when('I publish new test content to the bucket')
 def init_content_and_publish(context):
@@ -21,7 +22,7 @@ def init_content_and_publish(context):
     context.tempfiles.create(subdirs=1)
     context.tempfiles.create(subdirs=2)
     s3pub.upload.do_upload(
-        context.tempfiles.root,
+        context.tempfiles.tmpdir,
         context.config['bucket'],
         True,
         Credentials(
