@@ -82,8 +82,10 @@ def get_config():
     '''
     Read configuration variables from a file, possibly overlaid with env vars.
     '''
-    with open(CONFIG_PATH) as config_fp:
-        config = yaml.safe_load(config_fp)
+    config = {}
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH) as config_fp:
+            config = yaml.safe_load(config_fp)
 
     # environment variable overrides for Travis
     keymap = {
