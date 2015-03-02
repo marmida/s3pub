@@ -59,7 +59,7 @@ def _todos(bucket, prefix, paths, check_removed=True):
     is False, this list will always be empty.
     '''
     # map rpath -> lpath; we use this to compare md5s for existing keys
-    rpath_map = {i[1] : i[0] for i in paths}
+    rpath_map = dict((i[1], i[0]) for i in paths)
     
     # Iterate through the BucketListResultSet only once; we'll add elements to
     # two containers and will return them at the end.
@@ -88,7 +88,7 @@ def _todos(bucket, prefix, paths, check_removed=True):
             up[lpath] = (md5, key.name)
 
     # schedule uploads for new keys
-    for rpath in {i[1] for i in paths} - s3_keys:
+    for rpath in set(i[1] for i in paths) - s3_keys:
         lpath = rpath_map[rpath]
         with open(lpath, 'rb') as fp:
             md5 = boto.s3.key.compute_md5(fp)
@@ -147,7 +147,7 @@ def do_upload(src, dst, delete, creds):
     if to_upload: 
         # do upload
         pbar = s3pub.progress.UploadProgressBar(
-            {lpath : info[2] for lpath, (info, _) in iteritems(to_upload)})
+            dict((lpath, info[2]) for lpath, (info, _) in iteritems(to_upload)))
         for lpath, (md5, rpath) in iteritems(to_upload):
             _upload(bucket, lpath, rpath, md5, pbar)
             inval_paths.append(rpath)

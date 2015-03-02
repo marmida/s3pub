@@ -167,17 +167,17 @@ def test_do_upload_nochanges():
     '''
     do_upload: does nothing when there are no changes.
     '''
-    with mock.patch('s3pub.upload._todos', return_value=([], [])), \
-            mock.patch('boto.s3.connection.S3Connection') as mock_connection:
-        assert_equals(
-            upload.do_upload(
-                'bogus-src',
-                'bogus-bucket/bogus/path',
-                False,
-                mock.MagicMock(),
-            ),
-            [],
-        )
+    with mock.patch('s3pub.upload._todos', return_value=([], [])):
+        with mock.patch('boto.s3.connection.S3Connection') as mock_connection:
+            assert_equals(
+                upload.do_upload(
+                    'bogus-src',
+                    'bogus-bucket/bogus/path',
+                    False,
+                    mock.MagicMock(),
+                ),
+                [],
+            )
 
         mock_connection().get_bucket.assert_called_with('bogus-bucket')
 
@@ -217,27 +217,34 @@ def setup_do_upload(indexname):
     def wrapper(func):
         @wraps(func)
         def wrapped():
-            with mock.patch('s3pub.upload._todos') as mock_todos, \
-                    mock.patch('boto.s3.connection.S3Connection') as \
-                        mock_connection, \
-                    mock.patch(
-                        's3pub.upload._upload', side_effect=_start_progressbar), \
-                    mock.patch(
-                        's3pub.upload._get_index_doc', return_value=indexname):
-                mock_todos.return_value = (
+            # ugly: Python 2.6 compatibility for nested context managers
+            mock_todos = mock.patch(
+                's3pub.upload._todos',
+                return_value=(
                     {
-                        'path1': (('abcd', 'abcd==', 1234), '/path1'),
-                        'hello/index.html': 
-                            (('abcd', 'abcd==', 1234), '/hello/index.html'),
+                        'path1': (
+                            ('abcd', 'abcd==', 1234), '/path1'),
+                        'hello/index.html': (
+                            ('abcd', 'abcd==', 1234),
+                            '/hello/index.html',
+                        ),
                     },
                     ['/path2'],
-                )
-                mock_creds = mock.MagicMock(
-                    as_dict=mock.MagicMock(
-                        return_value={'a': 'xyz'},
-                    ),
-                )
-                return func(mock_todos, mock_connection, mock_creds)
+                ),
+            )
+            mock_connection = mock.patch('boto.s3.connection.S3Connection')
+            mock_upload = mock.patch(
+                's3pub.upload._upload', side_effect=_start_progressbar)
+            mock_get_index_doc = mock.patch(
+                's3pub.upload._get_index_doc', return_value=indexname)
+            mock_creds = mock.MagicMock(
+                as_dict=mock.MagicMock(return_value={'a': 'xyz'}))
+            
+            with mock_todos as mock_todos:
+                with mock_connection as mock_connection:
+                    with mock_upload as mock_upload:
+                        with mock_get_index_doc as mock_get_index_doc:
+                            return func(mock_todos, mock_connection, mock_creds)
         return wrapped
     return wrapper
     
@@ -248,7 +255,7 @@ def test_do_upload_no_website(mock_todos, mock_connection, mock_creds):
     '''
     assert_equals(
         set(upload.do_upload('bogus', 'bogus', False, mock_creds)),
-        {'/path1', '/hello/index.html'},
+        set(['/path1', '/hello/index.html']),
     )
     mock_connection.assert_called_once_with(
         **mock_creds.as_dict.return_value)
@@ -258,7 +265,7 @@ def test_do_upload_no_website(mock_todos, mock_connection, mock_creds):
     mock_bucket.delete_keys.return_value.errors = []
     assert_equals(
         set(upload.do_upload('bogus', 'bogus', True, mock_creds)),
-        {'/path1', '/hello/index.html', '/path2'},
+        set(['/path1', '/hello/index.html', '/path2']),
     )
     mock_bucket.delete_keys.assert_called_once_with(['/path2'])
 
@@ -274,5 +281,5 @@ def test_do_upload_with_website(mock_todos, mock_connection, mock_creds):
     '''
     assert_equals(
         set(upload.do_upload('bogus', 'bogus', False, mock_creds)),
-        {'/hello/index.html', '/hello/', '/hello', '/path1'},
+        set(['/hello/index.html', '/hello/', '/hello', '/path1']),
     )

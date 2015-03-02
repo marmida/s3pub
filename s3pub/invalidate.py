@@ -2,7 +2,7 @@
 CloudFront invalidation routines.
 '''
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 from boto.cloudfront import CloudFrontConnection
 import time
@@ -30,7 +30,7 @@ def do_invalidate(distrib_id, inval_keys, creds):
     pbar = s3pub.progress.InvalidationProgressBar(req.id)
     for _ in pbar(Monitor(cf, distrib_id, req.id)):
         pass
-    print 'Done.'
+    print('Done.')
 
 class Monitor(object):
     '''
