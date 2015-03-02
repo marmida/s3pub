@@ -43,15 +43,17 @@ class TempFileManager(object):
     It'd be nice to present this as a context manager, but that doesn't jive with
     behave's "before/after" callback system.
     '''
-    def __init__(self):
+    def __init__(self, prefix):
         self.registry = {}
-        self.root = tempfile.mkdtemp()
+        self.tmpdir = tempfile.mkdtemp()
+        self.root = os.path.join(self.tmpdir, prefix)
+        os.mkdir(self.root)
 
     def cleanup(self):
         '''
         Remove all temporary files on disk.
         '''
-        shutil.rmtree(self.root)
+        shutil.rmtree(self.tmpdir)
         self.registry = {}
         self.root = None
 
@@ -82,13 +84,17 @@ def get_config():
     '''
     Read configuration variables from a file, possibly overlaid with env vars.
     '''
-    with open(CONFIG_PATH) as config_fp:
-        config = yaml.safe_load(config_fp)
+    config = {}
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH) as config_fp:
+            config = yaml.safe_load(config_fp)
 
     # environment variable overrides for Travis
     keymap = {
         'S3ACCESSKEY': 'access-key',
         'S3SECRET': 'secret-access-key',
+        'S3BUCKET': 'bucket',
+        'S3URL': 's3-url',
     }
     for envname, confname in six.iteritems(keymap):
         if envname in os.environ:
@@ -101,21 +107,27 @@ def before_all(context):
     context.base_url = yurl.URL(context.config['s3-url'])
 
     def request(self, path):
-        return requests.get(self.base_url.replace(path=path).as_string())
+        return requests.get(
+            self.base_url.replace(path=context.prefix + '/' + path)
+                .as_string()
+        )
     context.request = types.MethodType(request, context)
 
     context.connection = S3Connection(
         context.config['access-key'], context.config['secret-access-key'])
     context.bucket = context.connection.get_bucket(context.config['bucket'])
-    
+
+    # tests must be able to run concurrently; scope to a random prefix
+    context.prefix = rand_token()
+
 def before_scenario(context, _):
     '''
     Initialize temporary file registries.
     '''
     # tempfiles: used by scenario for files uploaded by the user.
-    context.tempfiles = TempFileManager()
+    context.tempfiles = TempFileManager(context.prefix)
     # prior_files: used by scenario for stuff existing before user runs upload
-    context.prior_files = TempFileManager()
+    context.prior_files = TempFileManager(context.prefix)
 
 def after_scenario(context, _):
     '''

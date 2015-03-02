@@ -1,11 +1,17 @@
 language: python
 python:
+  - "3.4"
   - "3.3"
   - "2.7"
+  - "2.6"
 install:
   - pip install -r requirements/default.txt
   - pip install -r requirements/development.txt
-script: nosetests behave
+script:
+  - nosetests
+  # behave doesn't work on Python 2.6
+  - if [[ $TRAVIS_PYTHON_VERSION != '2.6' ]]; then behave; fi
 env:
   global:
-    secure: Fb8fYcMw956gAGlzIri//sC8feudrxp4bmAbjBMw3u3H2M9VyFSS4qzetkFioEURShFHNK2RFaVw44xwaohSaVvXNkx2vXu++BC0mzuVVoVqEcisW76wfyXXnCb5jtNEQajRRebnorAzsTY6IV9L694UYr8FmMedQ/+7bFaDEiI=
+    - S3BUCKET=s3pub-test
+    - S3URL=http://s3pub-test.s3-website-us-west-2.amazonaws.com/

@@ -5,8 +5,9 @@ Tests for s3pub.upload.
 from __future__ import absolute_import
 
 import boto.exception
+from functools import wraps
 import mock
-from nose.tools import assert_equals, raises
+from nose.tools import assert_equals, raises, nottest
 from six import iteritems
 
 from s3pub import upload
@@ -166,9 +167,19 @@ def test_do_upload_nochanges():
     '''
     do_upload: does nothing when there are no changes.
     '''
-    with mock.patch('s3pub.upload._todos', return_value=([], [])), \
-            mock.patch('boto.connect_s3'):
-        assert_equals(upload.do_upload('bogus', 'bogus', False), [])
+    with mock.patch('s3pub.upload._todos', return_value=([], [])):
+        with mock.patch('boto.s3.connection.S3Connection') as mock_connection:
+            assert_equals(
+                upload.do_upload(
+                    'bogus-src',
+                    'bogus-bucket/bogus/path',
+                    False,
+                    mock.MagicMock(),
+                ),
+                [],
+            )
+
+        mock_connection().get_bucket.assert_called_with('bogus-bucket')
 
 def test_get_index_doc():
     '''
@@ -202,54 +213,73 @@ def _start_progressbar(bucket, local_path, remote_path, md5, pbar):
     '''
     pbar.change_file(local_path)
 
-def test_do_upload_no_website():
+def setup_do_upload(indexname):
+    def wrapper(func):
+        @wraps(func)
+        def wrapped():
+            # ugly: Python 2.6 compatibility for nested context managers
+            mock_todos = mock.patch(
+                's3pub.upload._todos',
+                return_value=(
+                    {
+                        'path1': (
+                            ('abcd', 'abcd==', 1234), '/path1'),
+                        'hello/index.html': (
+                            ('abcd', 'abcd==', 1234),
+                            '/hello/index.html',
+                        ),
+                    },
+                    ['/path2'],
+                ),
+            )
+            mock_connection = mock.patch('boto.s3.connection.S3Connection')
+            mock_upload = mock.patch(
+                's3pub.upload._upload', side_effect=_start_progressbar)
+            mock_get_index_doc = mock.patch(
+                's3pub.upload._get_index_doc', return_value=indexname)
+            mock_creds = mock.MagicMock(
+                as_dict=mock.MagicMock(return_value={'a': 'xyz'}))
+            
+            with mock_todos as mock_todos:
+                with mock_connection as mock_connection:
+                    with mock_upload as mock_upload:
+                        with mock_get_index_doc as mock_get_index_doc:
+                            return func(mock_todos, mock_connection, mock_creds)
+        return wrapped
+    return wrapper
+    
+@setup_do_upload(None)
+def test_do_upload_no_website(mock_todos, mock_connection, mock_creds):
     '''
-    do_upload: returns only modified keys when there is no website.
+    do_upload: returns only modified keys when there is no index document.
     '''
-    with mock.patch('s3pub.upload._todos') as mock_todos, \
-            mock.patch('boto.connect_s3') as mock_connect, \
-            mock.patch(
-                's3pub.upload._upload', side_effect=_start_progressbar), \
-            mock.patch('s3pub.upload._get_index_doc'):
-        mock_todos.return_value = (
-            {
-                'path1': (('abcd', 'abcd==', 1234), '/path1'),
-                'hello/index.html': 
-                    (('abcd', 'abcd==', 1234), '/hello/index.html'),
-            },
-            ['/path2'],
-        )
-        assert_equals(
-            set(upload.do_upload('bogus', 'bogus', False)),
-            {'/path1', '/hello/index.html'},
-        )
+    assert_equals(
+        set(upload.do_upload('bogus', 'bogus', False, mock_creds)),
+        set(['/path1', '/hello/index.html']),
+    )
+    mock_connection.assert_called_once_with(
+        **mock_creds.as_dict.return_value)
 
-        mock_bucket = mock_connect.return_value.get_bucket.return_value
-        mock_bucket.delete_keys.return_value.errors = []
-        assert_equals(
-            set(upload.do_upload('bogus', 'bogus', True)),
-            {'/path1', '/hello/index.html', '/path2'},
-        )
-        mock_bucket.delete_keys.assert_called_once_with(['/path2'])
+    # verify that we attempt to delete keys when requested
+    mock_bucket = mock_connection.return_value.get_bucket.return_value
+    mock_bucket.delete_keys.return_value.errors = []
+    assert_equals(
+        set(upload.do_upload('bogus', 'bogus', True, mock_creds)),
+        set(['/path1', '/hello/index.html', '/path2']),
+    )
+    mock_bucket.delete_keys.assert_called_once_with(['/path2'])
 
-def test_do_upload_with_website():
+@setup_do_upload('index.html')
+def test_do_upload_with_website(mock_todos, mock_connection, mock_creds):
     '''
     do_upload: adds directory paths when index documents are invalidated.
+
+    According to this post:
+    http://paulstamatiou.com/hosting-on-amazon-s3-with-cloudfront/
+
+    We should invalidate directory paths with and without the trailing slash.
     '''
-    with mock.patch('s3pub.upload._todos') as mock_todos, \
-            mock.patch('boto.connect_s3'), \
-            mock.patch(
-                's3pub.upload._upload', side_effect=_start_progressbar), \
-            mock.patch('s3pub.upload._get_index_doc') as mock_get_index_doc:
-        mock_get_index_doc.return_value = 'index.html'
-        mock_todos.return_value = (
-            {
-                'hello/index.html':
-                    (('abcd', 'abcd==', 1234), '/hello/index.html'),
-            },
-            ['/path2'],
-        )
-        assert_equals(
-            upload.do_upload('bogus', 'bogus', False),
-            ['/hello/index.html', '/hello/'],
-        )
+    assert_equals(
+        set(upload.do_upload('bogus', 'bogus', False, mock_creds)),
+        set(['/hello/index.html', '/hello/', '/hello', '/path1']),
+    )
