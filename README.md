@@ -64,3 +64,7 @@ In the example commands above, I've used:
 [IAM]: http://aws.amazon.com/iam/
 [Amazon S3]: http://aws.amazon.com/s3/
 [Amazon CloudFront]: http://aws.amazon.com/cloudfront/
+
+## Alternatives
+
+Since writing this, I've discovered a more feature-complete analog: [s3_website](https://github.com/laurilehmijoki/s3_website).

@@ -13,6 +13,21 @@ import s3pub.invalidate
 import s3pub.upload
 
 DEFAULT_CONFIG_PATH = os.path.expanduser('~/.s3pub.conf')
+DESCRIPTION = '''\
+Publish content to S3 for use with web hosting.
+
+Mirrors local directories to S3, uploading only files that have changed or been
+added, and optionally removing files that have been deleted.
+
+Also optionally issues CloudFront invalidations for files modified or removed.
+'''
+EPILOG = '''
+With regards to the mirroring of paths: this program does not follow
+the rsync convention of trailing slashes; i.e. local paths with and without
+trailing slashes are equivalent, and remote paths will be created relative to
+the contents of the local path. This may force you to locally create container
+directories, sorry.
+'''
 
 class Credentials(object):
     '''
@@ -62,7 +77,8 @@ def cascade(containers, names):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='TODO: write me',
+        description=DESCRIPTION,
+        epilog=EPILOG,
     )
     parser.add_argument('src', help='Path to local content to upload')
     parser.add_argument(
