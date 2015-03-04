@@ -28,9 +28,9 @@ def test_find_first():
         ('a', [Struct(a=1, c=0), Struct(a=2, c=0)], 1),
         ('b', [Struct(a=1, c=0), Struct(a=2, c=0)], None),
         ('a', [{'a': 2, 'c': 0}, Struct(a=1, c=0)], 2),
-        ('a-b', [Struct(c=0), {'a-b': 2, 'c': 0}], 2),
-        ('a-b', [{'a-b': 2, 'c': 0}, Struct(a_b=1, c=0)], 2),
-        ('a-b', [{'c': 0}, Struct(a_b=1, c=0)], 1),
+        ('a_b', [Struct(c=0), {'a_b': 2, 'c': 0}], 2),
+        ('a_b', [{'a_b': 2, 'c': 0}, Struct(a_b=1, c=0)], 2),
+        ('a_b', [{'c': 0}, Struct(a_b=1, c=0)], 1),
     ]
     for args in args_ls:
         yield (_test_find_first, ) + args
@@ -42,14 +42,14 @@ def test_cascade():
     args_ls = [
         # (containers, names, expected)
         (
-            [Struct(a=1, c=0), Struct(a=2, b=9)],
-            ['a', 'b', 'c', 'd'],
-            (1, 9, 0, None),
+            [Struct(a=1, c=3), Struct(a=2, b=9, e=False)],
+            ['a', 'b', 'c', 'd', 'e'],
+            (1, 9, 3, None, None),
         ),
         (
-            [{'a': 1, 'c': 0}, Struct(a=2, b=9)],
-            ['a', 'b', 'c', 'd'],
-            (1, 9, 0, None),
+            [{'a': 1, 'c': 3, 'e': False}, Struct(a=2, b=9)],
+            ['a', 'b', 'c', 'd', 'e'],
+            (1, 9, 3, None, None),
         )
     ]
     for args in args_ls:

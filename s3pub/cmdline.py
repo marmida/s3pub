@@ -32,14 +32,19 @@ class Credentials(object):
         }
 
 def _find_first(name, containers):
+    '''
+    Retun the first truthy occurrence of name in containers.
+    '''
     for container in containers:
         try:
-            return container[name]
+            val = container[name]
+            if val:
+                return val
         except (KeyError, TypeError):
             pass
-        attrname = name.replace('-', '_')
-        if hasattr(container, attrname):
-            return getattr(container, attrname)
+        val = getattr(container, name, False)
+        if val:
+            return val
     # we didn't find it; return None
 
 def cascade(containers, names):
@@ -50,7 +55,8 @@ def cascade(containers, names):
     swapped for dashes when searching for attributes.
 
     Returns a tuple of the found values; indices correspond to the input.
-    None is returned when nothing was found.
+    None is returned when nothing was found. A value must be truthy in order to
+    be considered.
     '''
     return tuple(_find_first(name, containers) for name in names)
 
@@ -89,6 +95,11 @@ def parse_args():
     )
     args = parser.parse_args()
 
+    if args.config and args.config != DEFAULT_CONFIG_PATH \
+            and not os.path.isfile(args.config):
+        parser.error(
+            'Could not read configuration file: {0}'.format(args.config))
+
     try:
         with open(args.config) as config_fp:
             config = yaml.load(config_fp)
@@ -101,7 +112,7 @@ def parse_args():
                 args.config))
     else:
         # file was read properly; conditionally override args over config.
-        creds = cascade([args, config], ['aws-access-key', 'aws-secret-key'])
+        creds = cascade([args, config], ['aws_access_key', 'aws_secret_key'])
     
     if not all(i for i in creds):
         parser.error(
