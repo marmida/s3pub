@@ -150,3 +150,6 @@ def main():
     )
     if args.distrib_id and inval_keys:
         s3pub.invalidate.do_invalidate(args.distrib_id, inval_keys, args.creds)
+
+if __name__ == '__main__':
+    main()
