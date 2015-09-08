@@ -61,10 +61,12 @@ In the example commands above, I've used:
 1. cd into the s3pub directory.
 1. Run `nosetests` for unit tests and `behave` for functional tests. Note that the `behave` test suite requires configuration and write access to S3, as it does actually upload files.
 
-[IAM]: http://aws.amazon.com/iam/
-[Amazon S3]: http://aws.amazon.com/s3/
-[Amazon CloudFront]: http://aws.amazon.com/cloudfront/
-
 ## Alternatives
 
 Since writing this, I've discovered a more feature-complete analog: [s3_website](https://github.com/laurilehmijoki/s3_website).
+
+...and a less-featureful alternative: [alotofeffort](https://github.com/audreyr/alotofeffort)
+
+[IAM]: http://aws.amazon.com/iam/
+[Amazon S3]: http://aws.amazon.com/s3/
+[Amazon CloudFront]: http://aws.amazon.com/cloudfront/
