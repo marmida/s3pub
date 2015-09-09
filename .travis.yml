@@ -4,6 +4,7 @@ python:
   - "3.3"
   - "2.7"
   - "2.6"
+sudo: false
 install:
   - pip install -r requirements/default.txt
   - pip install -r requirements/development.txt
