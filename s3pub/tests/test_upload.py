@@ -44,6 +44,7 @@ def test_remote_path():
         (('', '.\\b\\c\\d', '.\\'), 'b/c/d'),
         (('a/b', 'c\\d', '.'), 'a/b/c/d'),
         (('a/b', 'c\\d\\e', 'c\\d'), 'a/b/e'),
+        (('d/', './a', '.'), 'd/a'),
     ]
     for args in args_ls:
         yield (_test_remote_path,) + args

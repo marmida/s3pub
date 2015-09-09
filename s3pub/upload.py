@@ -40,6 +40,7 @@ def _remote_path(dest, local_path, src_root):
     argument is omitted; we avoid this by using 'posixpath' and converting
     directory separators, since all s3 paths use forward slashes.
     '''
+    dest = dest.rstrip('/')
     local_path = local_path.replace('\\', '/')
     src_root = src_root.replace('\\', '/')
     return (dest and dest + '/' or '') + \
