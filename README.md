@@ -61,6 +61,24 @@ In the example commands above, I've used:
 1. cd into the s3pub directory.
 1. Run `nosetests` for unit tests and `behave` for functional tests. Note that the `behave` test suite requires configuration and write access to S3, as it does actually upload files.
 
+### Notes on behavioral testing
+
+It's hard to test some things under `behave` - namely, invalidations. This is
+because they take too long to complete - sometimes up to 15 minutes - and can
+hit time limits imposed by CI services.
+
+Second, it's hard to guarantee a sterile environment in which to test
+invalidations - unless we communicate exactly which invalidation is
+being started, the test can only check for the presence of at least one
+pending invalidation, and that can be fooled by a previous or contemporaneous
+run, which is extremely problematic in the context of tox.
+
+Since `s3pub` primarily communicates via progress bars, it's not trivial to
+recover things like the invalidation ID from stderr.
+
+All of this has led me to avoid testing invalidations via the test suite, for
+now.
+
 ## Alternatives
 
 Since writing this, I've discovered a more feature-complete analog: [s3_website](https://github.com/laurilehmijoki/s3_website).
